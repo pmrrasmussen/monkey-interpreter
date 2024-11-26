@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"monkey/token"
+	"strings"
 )
 
 type Program struct {
@@ -83,6 +84,23 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) statementNode()       {}
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+
+	for _, statement := range bs.Statements {
+		out.WriteString(statement.String())
+	}
+
+	return out.String()
+}
+
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
@@ -98,6 +116,57 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
+type FunctionLiteral struct {
+	Token      token.Token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (fn *FunctionLiteral) TokenLiteral() string { return fn.Token.Literal }
+func (fn *FunctionLiteral) expressionNode()      {}
+func (fn *FunctionLiteral) String() string {
+	var out bytes.Buffer
+
+	params := []string{}
+	for _, param := range fn.Parameters {
+		params = append(params, param.String())
+	}
+
+	out.WriteString(fn.TokenLiteral())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(") ")
+
+	out.WriteString(fn.Body.String())
+
+	return out.String()
+}
+
+type IfExpression struct {
+	Token       token.Token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (ifExp *IfExpression) TokenLiteral() string { return ifExp.Token.Literal }
+func (ifExp *IfExpression) expressionNode()      {}
+func (ifExp *IfExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("if")
+	out.WriteString(ifExp.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ifExp.Consequence.String())
+
+	if ifExp.Alternative != nil {
+		out.WriteString("else ")
+		out.WriteString(ifExp.Alternative.String())
+	}
+
+	return out.String()
+}
+
 type InfixExpression struct {
 	Token    token.Token
 	Left     Expression
@@ -105,7 +174,7 @@ type InfixExpression struct {
 	Right    Expression
 }
 
-func (in *InfixExpression) TokenLiteral() string { return in.TokenLiteral() }
+func (in *InfixExpression) TokenLiteral() string { return in.Token.Literal }
 func (in *InfixExpression) expressionNode()      {}
 func (in *InfixExpression) String() string {
 	var out bytes.Buffer
