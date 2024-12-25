@@ -236,8 +236,6 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 		return nil
 	}
 
-	p.nextToken()
-
 	return arguments
 }
 

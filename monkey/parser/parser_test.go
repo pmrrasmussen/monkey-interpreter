@@ -582,7 +582,7 @@ func TestFunctionParameterParsing(t *testing.T) {
 }
 
 func TestCallExpressionParsing(t *testing.T) {
-	input := "add(1, 2 * 3, 4 + 5);"
+	input := "add(1, 2 * 3, anotherAdd(4, 5));"
 
 	l := lexer.New(input)
 	p := New(l)
@@ -616,7 +616,23 @@ func TestCallExpressionParsing(t *testing.T) {
 
 	testLiteralExpression(t, exp.Arguments[0], 1)
 	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+
+	lastArg, ok := exp.Arguments[2].(*ast.CallExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.CallExpression. got=%T",
+			exp.Arguments[2])
+	}
+
+	if !testIdentifier(t, lastArg.Function, "anotherAdd") {
+		return
+	}
+
+	if len(lastArg.Arguments) != 2 {
+		t.Fatalf("wrong length of arguments for last call argument. got=%d", len(lastArg.Arguments))
+	}
+
+	testLiteralExpression(t, lastArg.Arguments[0], 4)
+	testLiteralExpression(t, lastArg.Arguments[1], 5)
 }
 
 func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
